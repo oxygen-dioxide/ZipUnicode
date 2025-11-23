@@ -1,5 +1,5 @@
 __author__ = "Duc Tin"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 import getpass
 import logging
@@ -17,7 +17,6 @@ import chardet
 logging.getLogger('chardet').level = logging.ERROR
 
 # Config our logger
-logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger('zip_unicode')
 
 
@@ -201,6 +200,7 @@ class ZipHandler:
 
 
 def entry_point():
+    logging.basicConfig(format='%(message)s', stream=sys.stdout, level=logging.INFO)
     parser = ArgumentParser(description='Fix filename encoding error '
                                         'inside a zip file.')
     parser.add_argument('zipfile', help='path to zip file')
