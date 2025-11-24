@@ -207,6 +207,10 @@ This will create a new `file_fixed.zip` contains all file names encoded with `UT
    Then you can use that `ENCODING` to extract zip file:
    
        zipu path/to/file.zip -x -enc ENCODING
+    
+    **Note**: `zipu` preserves the original timestamps (Creation, Access, Modification) of the files during extraction.
+    *   **Modification & Access Time**: Preserved on all platforms (Windows, Linux, macOS).
+    *   **Creation Time**: Preserved on **Windows** (if available in the zip file). On other platforms, it defaults to the system behavior (usually current time).
    
 4. A Password protected zip file:
 
@@ -264,6 +268,11 @@ This will create a new `file_fixed.zip` contains all file names encoded with `UT
    with your conventional tool.
 
 ## Changelog
+### 1.2.0
+   * **Timestamp Preservation**: `zipu` now preserves the original timestamps of extracted files.
+     * **Modification & Access Time**: Correctly restored from the zip metadata (including high-precision timestamps from NTFS/Unix extra fields).
+     * **Creation Time**: On **Windows**, the creation time is also restored if available in the zip file (or falls back to modification time to prevent "future creation" issues).
+   * **Logger Configuration**: The logger is only set up when `zipu` is used as an independent command-line tool. When imported as a library, no automatic logger configuration occurs.
 ### 1.1.0
    * Handle malformed zip file: Some zip files contain folders but are registered as file entries.
   These file entries have size of zero by and are extracted as zero-byte files.
