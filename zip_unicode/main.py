@@ -1,5 +1,5 @@
 __author__ = "Duc Tin"
-__version__ = "1.1.2"
+__version__ = "1.2.0"
 
 import getpass
 import logging
@@ -11,7 +11,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 
 import chardet
-
+from .time_utils import set_file_time
 
 # Disable chardet logger
 logging.getLogger('chardet').level = logging.ERROR
@@ -144,7 +144,12 @@ class ZipHandler:
             with output_path.open("wb+") as output_file:
                 stream = self.zip_ref.open(filename, pwd=password)
                 shutil.copyfileobj(fsrc=stream, fdst=output_file)
-                return True
+            
+            # Restore timestamp for file
+            zinfo = self.zip_ref.getinfo(filename)
+            set_file_time(output_path, zinfo)
+
+            return True
         except RuntimeError as e:
             if 'Bad password' in str(e):
                 logger.error(f"RuntimeError: Wrong password!")
@@ -163,9 +168,18 @@ class ZipHandler:
         if self.is_encrypted() and not password:
             password = getpass.getpass().encode()
 
+        dirs_to_set_time = []
+
         for original_name, decoded_name in self.name_map.items():
             if decoded_name.endswith("/"):
-                # skip subdirectory
+                # It is a directory
+                target_dir = destination / decoded_name
+                target_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    info = self.zip_ref.getinfo(original_name)
+                    dirs_to_set_time.append((target_dir, info))
+                except KeyError:
+                    pass
                 continue
 
             logger.info(f"Extracting: {decoded_name}")
@@ -175,6 +189,13 @@ class ZipHandler:
             if not extract_ok:
                 break
         else:
+            # Set time for directories after all files are extracted.
+            # Sort by length in descending order to process deepest directories first (bottom-up).
+            # This ensures that setting a child's timestamp doesn't inadvertently update the parent's timestamp.
+            dirs_to_set_time.sort(key=lambda x: len(str(x[0])), reverse=True)
+            for target_dir, info in dirs_to_set_time:
+                set_file_time(target_dir, info)
+
             logger.info("Finished")
 
     def __repr__(self):
