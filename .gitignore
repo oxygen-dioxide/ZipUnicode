@@ -3,3 +3,6 @@
 /dist/
 /ZipUnicode.egg-info/
 /.idea/
+/.vscode/
+/.pytest_cache/
+*/__pycache__
